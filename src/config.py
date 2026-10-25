@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     ENV: str = "development"
     LOG_LEVEL: str = "INFO"
     APP_HOST: str = "127.0.0.1"
-    APP_PORT: int = 8000
+    APP_PORT: int = 8080
 
     # Local filesystem paths
     BASE_DIR: Path = Path(__file__).resolve().parent.parent

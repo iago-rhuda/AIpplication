@@ -121,7 +121,7 @@ The entire architecture is strictly standardized on the following stack:
    ```bash
    python -m src.main
    ```
-   Open your browser at `http://127.0.0.1:8000`.
+   Open your browser at `http://127.0.0.1:8080`.
 
 ---
 
