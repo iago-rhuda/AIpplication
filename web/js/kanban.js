@@ -63,6 +63,10 @@ const Kanban = {
       const counter = document.getElementById(`count-${status}`);
       if (counter) counter.innerText = statusCounts[status] || "0";
     });
+
+    if (window.UI && typeof window.UI.updateKPIs === "function") {
+      window.UI.updateKPIs(apps);
+    }
   },
 
   renderCard(app) {
@@ -79,32 +83,77 @@ const Kanban = {
     const company = job.company_name || "Company";
     const title = job.title || "Stage Ingénieur IA";
     const loc = job.location || "Paris, France";
+    const score = job.compliance_score ? Math.round(job.compliance_score * 100) : 100;
+
+    let docButtonsHtml = "";
+    if (app.cv_web_url) {
+      docButtonsHtml += `<a href="${app.cv_web_url}" target="_blank" class="card-btn btn-ready" title="Open compiled 1-page LaTeX CV">📄 View CV</a>`;
+    }
+    if (app.cover_letter_web_url) {
+      docButtonsHtml += `<a href="${app.cover_letter_web_url}" target="_blank" class="card-btn btn-ready" title="Open generated Cover Letter">✉️ LM</a>`;
+    }
 
     card.innerHTML = `
       <div class="card-company">${company}</div>
       <div class="card-title">${title}</div>
       <div class="card-meta">
-        <span class="tag tag-iad">IAD Compliant</span>
+        <span class="tag tag-iad">IAD ${score}%</span>
         <span class="tag">${loc}</span>
-        <span class="tag">${app.application_mode.toUpperCase()}</span>
+        <span class="tag">${(app.application_mode || "semi_auto").toUpperCase()}</span>
       </div>
-      <div class="card-actions">
-        <button class="card-btn btn-gen-doc">Generate CV</button>
-        ${job.job_url ? `<a href="${job.job_url}" target="_blank" class="card-btn">Job Link</a>` : ""}
+      <div class="card-actions" id="cardActions-${app.id}">
+        ${docButtonsHtml}
+        <button class="card-btn btn-gen-doc">${app.cv_web_url ? "Regenerate CV" : "Generate CV"}</button>
+        ${job.job_url ? `<a href="${job.job_url}" target="_blank" class="card-btn" rel="noreferrer">Job Link</a>` : ""}
+      </div>
+      <div class="card-progress-wrapper" style="display: none;" id="cardProgress-${app.id}">
+        <div class="card-inline-progress"><div class="card-inline-fill"></div></div>
+        <div style="font-size: 0.72rem; color: var(--accent-cyan); margin-top: 0.25rem;">Compiling LaTeX template with pdflatex...</div>
       </div>
     `;
 
     const genBtn = card.querySelector(".btn-gen-doc");
+    const progressEl = card.querySelector(`#cardProgress-${app.id}`);
+
     genBtn.addEventListener("click", async () => {
-      genBtn.innerText = "Generating...";
       genBtn.disabled = true;
+      genBtn.classList.add("loading");
+      genBtn.innerText = "Compiling...";
+      if (progressEl) progressEl.style.display = "block";
+
+      if (window.UI) {
+        window.UI.setPipelineProgress(45, `Compiling custom LaTeX CV for ${company}...`);
+        window.UI.showToast(`Compiling single-page LaTeX CV for ${company}...`, "info", 4000);
+      }
+
       try {
         const res = await API.generateDocuments(app.id);
-        genBtn.innerText = "PDF Ready";
-        alert(`Documents compiled successfully!\nCV: ${res.cv_pdf_path}`);
+        if (progressEl) progressEl.style.display = "none";
+        genBtn.classList.remove("loading");
+        genBtn.disabled = false;
+        genBtn.innerText = "Regenerate CV";
+
+        if (window.UI) {
+          window.UI.setPipelineProgress(100, `CV compiled for ${company}!`);
+          window.UI.showToast(
+            `Resume successfully generated for ${company}!`,
+            "success",
+            8000,
+            [{ label: "Open PDF", url: res.cv_web_url }]
+          );
+        }
+
+        await Kanban.loadApplications();
       } catch (err) {
-        genBtn.innerText = "Error";
-        alert(`Generation failed: ${err.message}`);
+        if (progressEl) progressEl.style.display = "none";
+        genBtn.classList.remove("loading");
+        genBtn.disabled = false;
+        genBtn.innerText = "Retry CV";
+
+        if (window.UI) {
+          window.UI.setPipelineProgress(100, `Error compiling CV: ${err.message}`, true);
+          window.UI.showToast(`LaTeX compilation failed: ${err.message}`, "error", 8000);
+        }
       }
     });
 
