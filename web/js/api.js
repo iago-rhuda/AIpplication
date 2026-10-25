@@ -17,6 +17,11 @@ const API = {
     return res.json();
   },
 
+  async getScrapeStatus() {
+    const res = await fetch("/api/jobs/scrape/status");
+    return res.json();
+  },
+
   async getApplications(status = null) {
     const url = status ? `/api/applications?status=${status}` : "/api/applications";
     const res = await fetch(url);
