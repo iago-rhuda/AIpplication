@@ -1,40 +1,40 @@
 {
-  "candidato": {
-    "identidade": {
-      "nome_completo": "SEU NOME COMPLETO",
-      "titulo_profissional": "Stagiaire Ingénieur en IA & Science de Données",
-      "email_academico": "seu.email@etu.utc.fr",
-      "telefone": "+33 00 00 00 00 00",
-      "cidade_residencia": "Compiègne",
-      "pais": "France",
+  "candidate": {
+    "identity": {
+      "full_name": "YOUR FULL NAME",
+      "professional_title": "AI & Data Science Engineering Intern",
+      "academic_email": "your.email@etu.utc.fr",
+      "phone": "+33 00 00 00 00 00",
+      "city": "Compiègne",
+      "country": "France",
       "links": {
-        "linkedin": "https://linkedin.com/in/seu-perfil",
-        "github": "https://github.com/seu-usuario",
-        "portfolio": "https://seu-site.com"
+        "linkedin": "https://linkedin.com/in/your-profile",
+        "github": "https://github.com/your-username",
+        "portfolio": "https://your-portfolio.com"
       },
-      "foto_perfil_relpath": "data/profile/foto_perfil.jpg"
+      "profile_picture_relpath": "data/profile/profile_picture.jpg"
     },
-    "formacao": [
+    "education": [
       {
-        "instituicao": "Université de Technologie de Compiègne (UTC), France",
-        "grau": "Diplôme d'Ingénieur en Génie Informatique",
-        "filiere": "Intelligence Artificielle et Données (IAD)",
-        "periodo": "2025 -- 2027"
+        "institution": "Université de Technologie de Compiègne (UTC), France",
+        "degree": "Engineering Degree in Computer Science",
+        "track": "Artificial Intelligence & Data (IAD)",
+        "period": "2025 -- 2027"
       }
     ],
-    "preferencias_estagio": {
-      "tipo": "TN10",
-      "semestre": "P27",
-      "inicio_minimo": "2027-02-01",
-      "duracao_minima_semanas": 24,
-      "duracao_maxima_semanas": 26,
-      "regimes_aceitos": ["Présentiel", "Hybride"],
-      "zonas_geograficas": [
+    "internship_preferences": {
+      "internship_type": "TN10",
+      "academic_semester": "P27",
+      "earliest_start_date": "2027-02-01",
+      "min_duration_weeks": 24,
+      "max_duration_weeks": 26,
+      "workplace_types": ["On-site", "Hybrid"],
+      "target_locations": [
         "Paris",
         "Île-de-France",
         "Compiègne"
       ],
-      "idioma_padrao": "fr"
+      "default_submission_language": "fr"
     }
   }
 }
