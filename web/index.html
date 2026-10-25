@@ -25,6 +25,11 @@
         <button id="modeAuto" class="mode-btn" title="Autonomous end-to-end processing">Auto</button>
       </div>
 
+      <button id="btnRefreshAll" class="btn btn-secondary" title="Sync & Refresh Dashboard">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Sync
+      </button>
+
       <button id="btnScrape" class="btn">
         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>
         Scrape Jobs
@@ -35,6 +40,69 @@
       </button>
     </div>
   </header>
+
+  <!-- Real-Time Pipeline Progress & Status Banner -->
+  <aside class="pipeline-banner" id="pipelineBanner">
+    <div class="pipeline-header">
+      <div class="pipeline-info">
+        <span class="pulse-dot" id="pipelinePulse"></span>
+        <div>
+          <span class="pipeline-status-text" id="pipelineStatusText">Pipeline Idle</span>
+          <span class="pipeline-subtext" id="pipelineSubtext">Ready to scrape and process opportunities</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span class="pipeline-percent" id="pipelinePercent">0%</span>
+      </div>
+    </div>
+    <div class="progress-track-wrapper">
+      <div class="progress-track-bar" id="pipelineProgressBar"></div>
+    </div>
+  </aside>
+
+  <!-- KPI Metrics Overview Strip -->
+  <section class="kpi-strip" id="kpiStrip">
+    <div class="kpi-card">
+      <div>
+        <div class="kpi-label">Total Opportunities</div>
+        <div class="kpi-value" id="kpiTotalJobs">0</div>
+        <div class="kpi-sub">Sourced postings</div>
+      </div>
+      <div class="kpi-icon">🎯</div>
+    </div>
+    <div class="kpi-card">
+      <div>
+        <div class="kpi-label">IAD Compliance</div>
+        <div class="kpi-value" id="kpiComplianceRate">0%</div>
+        <div class="kpi-sub">UTC TN10 validated</div>
+      </div>
+      <div class="kpi-icon">⚡</div>
+    </div>
+    <div class="kpi-card">
+      <div>
+        <div class="kpi-label">Active Applications</div>
+        <div class="kpi-value" id="kpiActiveApps">0</div>
+        <div class="kpi-sub">In pipeline stages</div>
+      </div>
+      <div class="kpi-icon">📊</div>
+    </div>
+    <div class="kpi-card">
+      <div>
+        <div class="kpi-label">Pending Doubts</div>
+        <div class="kpi-value" id="kpiDoubtsCount" style="color: var(--accent-amber);">0</div>
+        <div class="kpi-sub">Human review queue</div>
+      </div>
+      <div class="kpi-icon">⏳</div>
+    </div>
+    <div class="kpi-card">
+      <div>
+        <div class="kpi-label">Resumes Compiled</div>
+        <div class="kpi-value" id="kpiResumesReady" style="color: var(--accent-green);">0</div>
+        <div class="kpi-sub">1-page LaTeX ready</div>
+      </div>
+      <div class="kpi-icon">📄</div>
+    </div>
+  </section>
 
   <!-- Navigation Tabs -->
   <nav class="tabs-nav">
@@ -126,10 +194,21 @@
 
     <!-- Tab 4: Live Terminal Logs -->
     <section id="logsTab" class="tab-pane">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <span style="font-size: 0.85rem; color: var(--text-muted);">
+          Real-time stream from <code>logs/app.log</code> &amp; system audit events
+        </span>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="btnClearLogs" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">Clear Terminal</button>
+        </div>
+      </div>
       <div id="logTerminal" class="log-terminal">Connecting to real-time audit stream...</div>
     </section>
 
   </main>
+
+  <!-- Global Toast Notifications Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
   <script src="js/api.js"></script>
   <script src="js/kanban.js"></script>
