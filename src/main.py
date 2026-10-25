@@ -48,6 +48,11 @@ app.include_router(doubts_router)
 app.include_router(cold_outreach_router)
 app.include_router(ws_router)
 
+# Mount generated documents directory for viewing/downloading CVs and dossiers
+output_dir = settings.OUTPUT_DIR
+output_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/output", StaticFiles(directory=str(output_dir)), name="output")
+
 # Mount local web dashboard
 web_dir = settings.BASE_DIR / "web"
 if web_dir.exists():
