@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stage AI Application Ecosystem — UTC TN10 Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Top Navigation & Global Controls -->
+  <header class="navbar">
+    <div class="brand">
+      <span class="brand-badge">UTC TN10</span>
+      <div>
+        <h1 class="brand-title">Stage AI Application Ecosystem</h1>
+        <p class="brand-subtitle">AI & Data Science Engineering Internship Pipeline</p>
+      </div>
+    </div>
+
+    <div class="controls-group">
+      <!-- Mode Toggle -->
+      <div class="mode-toggle">
+        <button id="modeSemiAuto" class="mode-btn active" title="System prepares application and requests your approval">Semi-Auto</button>
+        <button id="modeAuto" class="mode-btn" title="Autonomous end-to-end processing">Auto</button>
+      </div>
+
+      <button id="btnScrape" class="btn">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>
+        Scrape Jobs
+      </button>
+
+      <button id="btnGenColdReport" class="btn btn-secondary">
+        Generate Cold Report
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="tabs-nav">
+    <button class="tab-btn active" data-tab="kanbanTab">
+      Kanban Pipeline
+    </button>
+    <button class="tab-btn" data-tab="doubtsTab">
+      Pending Doubts <span id="doubtsBadge" class="badge">0</span>
+    </button>
+    <button class="tab-btn" data-tab="coldTab">
+      Cold Outreach Targets
+    </button>
+    <button class="tab-btn" data-tab="logsTab">
+      Live Audit Logs
+    </button>
+  </nav>
+
+  <!-- Main Workspace -->
+  <main class="workspace">
+
+    <!-- Tab 1: Kanban Board -->
+    <section id="kanbanTab" class="tab-pane active">
+      <div class="kanban-board">
+        <!-- Column: Wishlist -->
+        <div class="kanban-col" data-status="wishlist">
+          <div class="kanban-header">
+            <span class="kanban-title">Wishlist</span>
+            <span class="kanban-count" id="count-wishlist">0</span>
+          </div>
+          <div class="kanban-cards" id="cards-wishlist"></div>
+        </div>
+
+        <!-- Column: To Apply -->
+        <div class="kanban-col" data-status="to_apply">
+          <div class="kanban-header">
+            <span class="kanban-title">To Apply</span>
+            <span class="kanban-count" id="count-to_apply">0</span>
+          </div>
+          <div class="kanban-cards" id="cards-to_apply"></div>
+        </div>
+
+        <!-- Column: Applied -->
+        <div class="kanban-col" data-status="applied">
+          <div class="kanban-header">
+            <span class="kanban-title">Applied</span>
+            <span class="kanban-count" id="count-applied">0</span>
+          </div>
+          <div class="kanban-cards" id="cards-applied"></div>
+        </div>
+
+        <!-- Column: Interview -->
+        <div class="kanban-col" data-status="interview">
+          <div class="kanban-header">
+            <span class="kanban-title">Interview</span>
+            <span class="kanban-count" id="count-interview">0</span>
+          </div>
+          <div class="kanban-cards" id="cards-interview"></div>
+        </div>
+
+        <!-- Column: Offer -->
+        <div class="kanban-col" data-status="offer">
+          <div class="kanban-header">
+            <span class="kanban-title">Offer</span>
+            <span class="kanban-count" id="count-offer">0</span>
+          </div>
+          <div class="kanban-cards" id="cards-offer"></div>
+        </div>
+
+        <!-- Column: Rejected -->
+        <div class="kanban-col" data-status="rejected">
+          <div class="kanban-header">
+            <span class="kanban-title">Rejected</span>
+            <span class="kanban-count" id="count-rejected">0</span>
+          </div>
+          <div class="kanban-cards" id="cards-rejected"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: Doubts & Human Approval Queue -->
+    <section id="doubtsTab" class="tab-pane">
+      <div id="doubtsList" class="grid-view"></div>
+    </section>
+
+    <!-- Tab 3: Cold Outreach Targets -->
+    <section id="coldTab" class="tab-pane">
+      <div id="coldList" class="grid-view"></div>
+    </section>
+
+    <!-- Tab 4: Live Terminal Logs -->
+    <section id="logsTab" class="tab-pane">
+      <div id="logTerminal" class="log-terminal">Connecting to real-time audit stream...</div>
+    </section>
+
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/kanban.js"></script>
+  <script src="js/doubts.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

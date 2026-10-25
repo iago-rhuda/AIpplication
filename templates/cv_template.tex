@@ -1,0 +1,125 @@
+%==============================================================
+%  Template CV LaTeX — Modèle Paramétré (Format 1 Page Rigoureux)
+%==============================================================
+\documentclass[10pt]{article}
+\usepackage[a4paper,
+  top=0.38in,
+  bottom=0.38in,
+  left=0.52in,
+  right=0.52in]{geometry}
+\usepackage{XCharter}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{tikz}
+
+\raggedright
+\pagestyle{empty}
+
+\input{glyphtounicode}
+\pdfgentounicode=1
+
+\titleformat{\section}
+  {\bfseries\large}
+  {}
+  {0pt}
+  {}
+  [\vspace{2pt}\titlerule]
+
+\titlespacing*{\section}{0pt}{8pt}{4pt}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\small$\bullet$}}$}
+
+\setlist[itemize]{
+    itemsep=1.5pt,
+    parsep=0pt,
+    leftmargin=14pt,
+    topsep=3pt,
+    partopsep=0pt
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+
+\begin{document}
+
+% --------------------------------------------------------------------------
+% EN-TÊTE
+% --------------------------------------------------------------------------
+\begin{minipage}[c]{0.78\textwidth}
+    {\Huge \textbf{<<<CANDIDATE_NAME>>>}}
+
+    \vspace{4pt}
+
+    {\Large \textit{<<<CANDIDATE_TITLE>>>}}
+
+    \vspace{3pt}
+
+    \href{mailto:<<<CANDIDATE_EMAIL>>>}{<<<CANDIDATE_EMAIL>>>}
+    \enspace\textbar\enspace
+    <<<CANDIDATE_PHONE>>>
+    \enspace\textbar\enspace
+    <<<CANDIDATE_LOCATION>>>
+
+    \vspace{2pt}
+
+    \href{<<<LINKEDIN_URL>>>}{\underline{<<<LINKEDIN_DISPLAY>>>}}
+    \enspace\textbar\enspace
+    \href{<<<PORTFOLIO_URL>>>}{\underline{<<<PORTFOLIO_DISPLAY>>>}}
+    \enspace\textbar\enspace
+    \href{<<<GITHUB_URL>>>}{\underline{<<<GITHUB_DISPLAY>>>}}
+\end{minipage}
+\hfill
+\begin{minipage}[c]{0.18\textwidth}
+    \centering
+    \begin{tikzpicture}
+        \clip[rounded corners=0.25cm] (0,0) rectangle (3cm, 3cm);
+        \node[anchor=south west, inner sep=0] at (0,0) {\includegraphics[width=3cm,height=3cm]{<<<PROFILE_PICTURE_PATH>>>}};
+    \end{tikzpicture}
+\end{minipage}
+
+% --------------------------------------------------------------------------
+% ACCROCHE
+% --------------------------------------------------------------------------
+\vspace{5pt}
+<<<ACCROCHE_TEXT>>>
+
+% --------------------------------------------------------------------------
+% FORMATION
+% --------------------------------------------------------------------------
+\section*{FORMATION}
+
+<<<FORMATION_BLOCK>>>
+
+% --------------------------------------------------------------------------
+% EXPÉRIENCES PROFESSIONNELLES
+% --------------------------------------------------------------------------
+\section*{EXPÉRIENCES PROFESSIONNELLES}
+
+<<<EXPERIENCES_BLOCK>>>
+
+% --------------------------------------------------------------------------
+% PROJETS
+% --------------------------------------------------------------------------
+\section*{PROJETS}
+
+<<<PROJECTS_BLOCK>>>
+
+% --------------------------------------------------------------------------
+% COMPÉTENCES
+% --------------------------------------------------------------------------
+\section*{COMPÉTENCES}
+
+<<<SKILLS_BLOCK>>>
+
+% --------------------------------------------------------------------------
+% CENTRES D'INTÉRÊT
+% --------------------------------------------------------------------------
+\section*{CENTRES D'INTÉRÊT}
+
+<<<INTERESTS_BLOCK>>>
+
+\end{document}

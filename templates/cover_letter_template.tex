@@ -1,0 +1,69 @@
+%==============================================================
+%  Template Lettre de Motivation (Cover Letter) — Format Officiel Français
+%==============================================================
+\documentclass[11pt]{article}
+\usepackage[a4paper,
+  top=0.8in,
+  bottom=0.8in,
+  left=0.8in,
+  right=0.8in]{geometry}
+\usepackage{XCharter}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[hidelinks]{hyperref}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+\begin{document}
+
+% --------------------------------------------------------------------------
+% COORDONNÉES EXPÉDITEUR
+% --------------------------------------------------------------------------
+\textbf{<<<CANDIDATE_NAME>>>} \\
+<<<CANDIDATE_TITLE>>> \\
+<<<CANDIDATE_EMAIL>>> \enspace\textbar\enspace <<<CANDIDATE_PHONE>>> \\
+<<<CANDIDATE_LOCATION>>>
+
+\vspace{12pt}
+
+% --------------------------------------------------------------------------
+% DESTINATAIRE & DATE
+% --------------------------------------------------------------------------
+\begin{flushright}
+    \textbf{<<<COMPANY_NAME>>>} \\
+    <<<COMPANY_RECIPIENT>>> \\
+    <<<COMPANY_LOCATION>>> \\
+    \vspace{6pt}
+    À Compiègne, le <<<LETTER_DATE>>>
+\end{flushright}
+
+\vspace{10pt}
+
+% --------------------------------------------------------------------------
+% OBJET
+% --------------------------------------------------------------------------
+\textbf{Objet : Candidature pour le stage <<<JOB_TITLE>>> (Semestre P27 -- Février 2027)}
+
+\vspace{10pt}
+
+<<<SALUTATION>>>,
+
+<<<PARAGRAPH_INTRO>>>
+
+<<<PARAGRAPH_BACKGROUND>>>
+
+<<<PARAGRAPH_PROJECTS_FIT>>>
+
+<<<PARAGRAPH_MOTIVATION_COMPANY>>>
+
+<<<PARAGRAPH_CLOSING>>>
+
+\vspace{14pt}
+
+\begin{flushright}
+    <<<CANDIDATE_NAME>>>
+\end{flushright}
+
+\end{document}
