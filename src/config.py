@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     DB_PATH: Path = STORAGE_DIR / "app.db"
     DB_URL: str = f"sqlite+aiosqlite:///{DB_PATH.as_posix()}"
     LOGS_DIR: Path = BASE_DIR / "logs"
-    APPLICATIONS_OUTPUT_DIR: Path = BASE_DIR / "output" / "applications"
+    OUTPUT_DIR: Path = BASE_DIR / "output"
+    APPLICATIONS_OUTPUT_DIR: Path = OUTPUT_DIR / "applications"
     TEMPLATES_DIR: Path = BASE_DIR / "templates"
 
     # LaTeX configuration
