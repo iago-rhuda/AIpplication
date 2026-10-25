@@ -1,5 +1,4 @@
-"""Job listings and scraping trigger endpoints."""
-
+import json
 from datetime import datetime, timezone
 from typing import Any
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -14,6 +13,8 @@ from src.database.crud import (
     get_job_by_url,
 )
 from src.database.session import async_session_factory, get_db
+from src.engine.career_ops_evaluator import evaluate_with_career_ops
+from src.engine.career_ops_sync import append_or_update_contact
 from src.engine.filter_compliance import evaluate_job_posting
 from src.engine.scraper import scraper
 from src.utils.logger import log_audit_event, logger
@@ -110,12 +111,41 @@ async def run_scraping_pipeline(keywords: list[str], location: str, limit: int) 
                 # If compliant, push to Kanban 'wishlist' column
                 if created_job.is_iad_compliant:
                     compliant_count += 1
-                    await create_application(db, {
-                        "job_id": created_job.id,
-                        "status": "wishlist",
-                        "application_mode": "semi_auto",
-                        "requires_cover_letter": False,
-                    })
+                    
+                    # Run Career-Ops A-H evaluation
+                    eval_res = evaluate_with_career_ops(raw_job, report_num=created_job.id)
+
+                    app = await create_application(
+                        db,
+                        {
+                            "job_id": created_job.id,
+                            "status": "wishlist",
+                            "application_mode": "semi_auto",
+                            "requires_cover_letter": False,
+                            "evaluation_score": eval_res["evaluation_score"],
+                            "match_grade": eval_res["match_grade"],
+                            "salary_range": eval_res["salary_range"],
+                            "star_stories": json.dumps(eval_res["star_stories"], ensure_ascii=False),
+                            "form_answers": json.dumps(eval_res["form_answers"], ensure_ascii=False),
+                            "key_contact_name": eval_res["key_contact_name"],
+                            "key_contact_role": eval_res["key_contact_role"],
+                            "outreach_message": eval_res["outreach_message"],
+                            "evaluation_report_path": eval_res["report_rel_path"],
+                        },
+                        source="scraper",
+                        initial_note="Ingested via automated scraper and qualified for UTC TN10 P27",
+                    )
+
+                    # Record contact discovery in contacts.tsv
+                    if eval_res.get("key_contact_name"):
+                        append_or_update_contact(
+                            name=eval_res["key_contact_name"],
+                            company=created_job.company_name,
+                            contact_type="recruiter",
+                            title=eval_res["key_contact_role"],
+                            tracker_num=app.id,
+                            notes=f"Identified for {created_job.title}",
+                        )
                 else:
                     # If rejected or ambiguous, register in doubts for human review
                     doubts_count += 1

@@ -7,7 +7,6 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from pypdf import PdfReader
 
 from src.config import settings
 from src.engine.latex_compiler import LatexCompilerError, load_candidate_profile, sanitize_latex_text

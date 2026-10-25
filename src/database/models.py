@@ -60,6 +60,7 @@ class Application(Base):
     )  # 'auto', 'semi_auto'
     cv_pdf_path = Column(String(1024), nullable=True)
     cover_letter_pdf_path = Column(String(1024), nullable=True)
+    report_path = Column(String(1024), nullable=True)
     requires_cover_letter = Column(Boolean, nullable=False, default=False)
     applied_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
@@ -67,8 +68,44 @@ class Application(Base):
         DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
     )
 
+    # Career-Ops Rich Traceability & Evaluation Extensions
+    evaluation_score = Column(Float, nullable=True, default=4.0)
+    match_grade = Column(String(10), nullable=True, default="A")
+    salary_range = Column(String(100), nullable=True)
+    followup_due_at = Column(DateTime, nullable=True)
+    key_contact_name = Column(String(255), nullable=True)
+    key_contact_role = Column(String(255), nullable=True)
+    key_contact_linkedin = Column(String(512), nullable=True)
+    key_contact_email = Column(String(255), nullable=True)
+    outreach_message = Column(Text, nullable=True)
+    star_stories = Column(Text, nullable=True)  # JSON serialized STAR+R stories
+    form_answers = Column(Text, nullable=True)  # JSON serialized application draft answers
+    evaluation_report_path = Column(String(1024), nullable=True)
+
     # Relationships
     job = relationship("Job", back_populates="applications")
+    status_events = relationship(
+        "StatusEvent", back_populates="application", cascade="all, delete-orphan", order_by="StatusEvent.created_at.desc()"
+    )
+
+
+class StatusEvent(Base):
+    """Immutable status transition ledger matching career-ops status-log convention."""
+
+    __tablename__ = "status_events"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    application_id = Column(Integer, ForeignKey("applications.id", ondelete="CASCADE"), nullable=False)
+    from_status = Column(String(50), nullable=True)
+    to_status = Column(String(50), nullable=False)
+    source = Column(String(50), nullable=False, default="user")  # 'user', 'scraper', 'evaluator', 'scheduler', 'sync'
+    notes = Column(Text, nullable=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+    # Relationships
+    application = relationship("Application", back_populates="status_events")
 
 
 class Doubt(Base):

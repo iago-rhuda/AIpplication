@@ -1,5 +1,5 @@
 /**
- * API communication helper module for Stage AI Ecosystem.
+ * API communication helper module for Stage AI Ecosystem with Career-Ops integrations.
  */
 
 const API = {
@@ -28,13 +28,39 @@ const API = {
     return res.json();
   },
 
-  async updateApplicationStatus(appId, newStatus, notes = null) {
+  async getApplication(appId) {
+    const res = await fetch(`/api/applications/${appId}`);
+    return res.json();
+  },
+
+  async updateApplicationStatus(appId, newStatus, notes = null, source = "user") {
     const res = await fetch(`/api/applications/${appId}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus, notes }),
+      body: JSON.stringify({ status: newStatus, notes, source }),
     });
     return res.json();
+  },
+
+  async addApplicationEvent(appId, notes, source = "user") {
+    const res = await fetch(`/api/applications/${appId}/events`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes, source }),
+    });
+    return res.json();
+  },
+
+  async triggerEvaluation(appId) {
+    const res = await fetch(`/api/applications/${appId}/evaluate`, {
+      method: "POST",
+    });
+    return res.json();
+  },
+
+  async getApplicationReport(appId) {
+    const res = await fetch(`/api/applications/${appId}/report`);
+    return res.text();
   },
 
   async generateDocuments(appId) {

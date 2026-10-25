@@ -1,9 +1,10 @@
 /**
- * Main application script initializing tabs, real-time WebSockets, progress bars, and controls.
+ * Main application script initializing tabs, real-time WebSockets, progress bars, theme toggle, and controls.
  */
 
 const UI = {
   activePollInterval: null,
+  progressHideTimeout: null,
 
   showToast(title, type = "info", duration = 5000, actions = []) {
     const container = document.getElementById("toastContainer");
@@ -21,8 +22,9 @@ const UI = {
 
     let actionsHtml = "";
     if (actions && actions.length > 0) {
-      actionsHtml = `<div class="toast-actions">` +
-        actions.map(a => `<a href="${a.url}" target="_blank" class="toast-action-btn">${a.label}</a>`).join("") +
+      actionsHtml =
+        `<div class="toast-actions">` +
+        actions.map((a) => `<a href="${a.url}" target="_blank" class="toast-action-btn">${a.label}</a>`).join("") +
         `</div>`;
     }
 
@@ -33,7 +35,7 @@ const UI = {
           <div class="toast-title">${title}</div>
           ${actionsHtml}
         </div>
-        <button class="toast-close" title="Dismiss">&times;</button>
+        <button class="toast-close" title="Fechar">&times;</button>
       </div>
       <div class="toast-bar"></div>
     `;
@@ -61,21 +63,31 @@ const UI = {
   },
 
   setPipelineProgress(percent, message, isError = false) {
+    const banner = document.getElementById("pipelineBanner");
     const bar = document.getElementById("pipelineProgressBar");
     const percentEl = document.getElementById("pipelinePercent");
     const textEl = document.getElementById("pipelineStatusText");
     const subtextEl = document.getElementById("pipelineSubtext");
     const pulse = document.getElementById("pipelinePulse");
 
+    if (this.progressHideTimeout) {
+      clearTimeout(this.progressHideTimeout);
+      this.progressHideTimeout = null;
+    }
+
     const clamped = Math.max(0, Math.min(100, Math.round(percent)));
+
+    // Visibility rule: Visible ONLY when something is running or alert; hidden when idle (0)
+    if (banner) {
+      if (clamped > 0 || isError) {
+        banner.style.display = "block";
+      } else {
+        banner.style.display = "none";
+      }
+    }
 
     if (bar) {
       bar.style.width = `${clamped}%`;
-      if (clamped > 0 && clamped < 100) {
-        bar.classList.add("active");
-      } else {
-        bar.classList.remove("active");
-      }
     }
 
     if (percentEl) percentEl.innerText = `${clamped}%`;
@@ -90,14 +102,23 @@ const UI = {
     }
 
     if (textEl) {
-      if (isError) textEl.innerText = "Pipeline Alert";
-      else if (clamped === 100) textEl.innerText = "Operation Completed";
-      else if (clamped > 0) textEl.innerText = "Task in Progress";
-      else textEl.innerText = "Pipeline Idle";
+      if (isError) textEl.innerText = "Alerta na Pipeline";
+      else if (clamped === 100) textEl.innerText = "Operação Concluída";
+      else if (clamped > 0) textEl.innerText = "Buscando & Avaliando Oportunidades";
+      else textEl.innerText = "Pipeline Pronta";
     }
 
     if (subtextEl && message) {
       subtextEl.innerText = message;
+    }
+
+    // Auto-hide when reaching 100% after 2 seconds
+    if (clamped === 100 && banner && !isError) {
+      this.progressHideTimeout = setTimeout(() => {
+        banner.style.display = "none";
+        if (bar) bar.style.width = "0%";
+        if (percentEl) percentEl.innerText = "0%";
+      }, 2000);
     }
   },
 
@@ -109,12 +130,11 @@ const UI = {
       }
 
       const totalApps = applications.length;
-      const readyResumes = applications.filter(a => !!a.cv_pdf_path).length;
-      const activeApps = applications.filter(a => a.status !== "rejected").length;
+      const readyResumes = applications.filter((a) => !!a.cv_pdf_path).length;
+      const activeApps = applications.filter((a) => a.status !== "rejected").length;
 
-      // Calculate average compliance score or rate
       let compliantCount = 0;
-      applications.forEach(a => {
+      applications.forEach((a) => {
         if (a.job && a.job.is_iad_compliant) compliantCount++;
       });
       const complianceRate = totalApps > 0 ? Math.round((compliantCount / totalApps) * 100) : 100;
@@ -137,17 +157,14 @@ const UI = {
   },
 
   async refreshAll() {
-    UI.setPipelineProgress(30, "Syncing pipeline state with database...");
+    UI.setPipelineProgress(30, "Sincronizando estado com o ledger canônico...");
     await Promise.allSettled([
       Kanban.loadApplications(),
       Doubts.loadDoubts(),
       loadColdOutreach(),
       UI.updateKPIs(),
     ]);
-    UI.setPipelineProgress(100, "Dashboard synced & up-to-date.");
-    setTimeout(() => {
-      UI.setPipelineProgress(0, "Pipeline ready for next task.");
-    }, 2000);
+    UI.setPipelineProgress(100, "Dashboard sincronizado com data/status-log.tsv.");
   },
 
   startScrapingMonitor() {
@@ -167,7 +184,10 @@ const UI = {
           const btnScrape = document.getElementById("btnScrape");
           if (btnScrape) {
             btnScrape.disabled = false;
-            btnScrape.innerHTML = `<svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg> Scrape Jobs`;
+            btnScrape.innerHTML = `
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span>Iniciar Busca Automática</span>
+            `;
           }
 
           if (state.step === "completed") {
@@ -176,27 +196,68 @@ const UI = {
             await Doubts.loadDoubts();
             await this.updateKPIs();
           } else if (state.step === "error") {
-            this.showToast(`Scraping issue: ${state.error}`, "error", 8000);
+            this.showToast(`Problema na busca: ${state.error}`, "error", 8000);
           }
         }
       } catch (err) {
-        console.warn("Polling error:", err);
+        console.error("Monitor poll error:", err);
       }
-    }, 1500);
+    }, 2000);
   },
 };
 
-window.UI = UI;
+// ==========================================================================
+// Theme Management (Light by Default, Dark togglable)
+// ==========================================================================
+
+function initTheme() {
+  const savedTheme = localStorage.getItem("stage_theme") || "light";
+  document.documentElement.setAttribute("data-theme", savedTheme);
+  updateThemeButton(savedTheme);
+
+  const btnTheme = document.getElementById("btnThemeToggle");
+  if (btnTheme) {
+    btnTheme.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme") || "light";
+      const nextTheme = current === "light" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", nextTheme);
+      localStorage.setItem("stage_theme", nextTheme);
+      updateThemeButton(nextTheme);
+      if (window.UI) {
+        window.UI.showToast(`Modo ${nextTheme === "light" ? "Claro" : "Escuro"} ativado`, "info", 2000);
+      }
+    });
+  }
+}
+
+function updateThemeButton(theme) {
+  const icon = document.getElementById("themeIcon");
+  const label = document.getElementById("themeLabel");
+  if (icon && label) {
+    if (theme === "light") {
+      icon.innerText = "☀️";
+      label.innerText = "Claro";
+    } else {
+      icon.innerText = "🌙";
+      label.innerText = "Escuro";
+    }
+  }
+}
+
+// ==========================================================================
+// Document Ready & Event Bindings
+// ==========================================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. Initialize Tabs
-  const tabButtons = document.querySelectorAll(".tab-btn");
-  const tabPanes = document.querySelectorAll(".tab-pane");
+  // 1. Initialize Theme (Light by default)
+  initTheme();
 
-  tabButtons.forEach((btn) => {
+  // 2. Navigation Tabs
+  const tabBtns = document.querySelectorAll(".tabs-nav .tab-btn");
+  tabBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
-      tabButtons.forEach((b) => b.classList.remove("active"));
-      tabPanes.forEach((p) => p.classList.remove("active"));
+      tabBtns.forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".workspace .tab-pane").forEach((p) => p.classList.remove("active"));
 
       btn.classList.add("active");
       const targetPane = document.getElementById(btn.dataset.tab);
@@ -207,92 +268,100 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // 2. Initialize Mode Toggle
+  // 3. Mode Toggle
   const semiAutoBtn = document.getElementById("modeSemiAuto");
   const autoBtn = document.getElementById("modeAuto");
 
-  semiAutoBtn.addEventListener("click", () => {
-    semiAutoBtn.classList.add("active");
-    autoBtn.classList.remove("active");
-    UI.showToast("Switched to Semi-Auto mode: AI prepares resumes and waits for your confirmation.", "info", 3500);
-  });
+  if (semiAutoBtn && autoBtn) {
+    semiAutoBtn.addEventListener("click", () => {
+      semiAutoBtn.classList.add("active");
+      autoBtn.classList.remove("active");
+      UI.showToast("Modo Semi-Auto: O robô prepara candidaturas e solicita sua aprovação.", "info", 3500);
+    });
 
-  autoBtn.addEventListener("click", () => {
-    autoBtn.classList.add("active");
-    semiAutoBtn.classList.remove("active");
-    UI.showToast("Switched to Autonomous mode: End-to-end auto-compilation enabled.", "warning", 3500);
-  });
+    autoBtn.addEventListener("click", () => {
+      autoBtn.classList.add("active");
+      semiAutoBtn.classList.remove("active");
+      UI.showToast("Modo Autônomo: Processamento e compilação de ponta a ponta.", "warning", 3500);
+    });
+  }
 
-  // 3. Global Sync Button
+  // 4. Global Sync Button
   const btnRefresh = document.getElementById("btnRefreshAll");
   if (btnRefresh) {
     btnRefresh.addEventListener("click", async () => {
       btnRefresh.disabled = true;
       await UI.refreshAll();
       btnRefresh.disabled = false;
-      UI.showToast("Dashboard synchronized with database.", "success", 3000);
+      UI.showToast("Dashboard sincronizado com os arquivos canônicos.", "success", 3000);
     });
   }
 
-  // 4. Trigger Scraping Action
+  // 5. Trigger Scraping Action (Play Button)
   const btnScrape = document.getElementById("btnScrape");
-  btnScrape.addEventListener("click", async () => {
-    btnScrape.disabled = true;
-    btnScrape.innerHTML = `<span style="display:inline-block; animation: spin 1s infinite linear;">⟳</span> Scraping...`;
-    UI.setPipelineProgress(10, "Initiating stealth browser scraper (LinkedIn & WTTJ)...");
-    UI.showToast("Job prospecting launched in background. Streaming updates...", "info", 4000);
+  if (btnScrape) {
+    btnScrape.addEventListener("click", async () => {
+      btnScrape.disabled = true;
+      btnScrape.innerHTML = `
+        <span style="display:inline-block; animation: spin 1s infinite linear;">⟳</span>
+        <span>Buscando Vagas...</span>
+      `;
+      UI.setPipelineProgress(10, "Iniciando raspagem no LinkedIn e Welcome to the Jungle...");
+      UI.showToast("Busca de vagas iniciada em segundo plano. Acompanhe a pipeline...", "info", 4000);
 
-    try {
-      const res = await API.triggerScrape();
-      if (res.status === "already_running") {
-        UI.showToast("Scraping is already in progress. Following current task...", "warning", 4000);
+      try {
+        const res = await API.triggerScrape();
+        if (res.status === "already_running") {
+          UI.showToast("Uma busca já está em andamento. Monitorando progresso...", "warning", 4000);
+        }
+        UI.startScrapingMonitor();
+      } catch (err) {
+        btnScrape.disabled = false;
+        btnScrape.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>Iniciar Busca Automática</span>
+        `;
+        UI.setPipelineProgress(100, `Falha ao iniciar: ${err.message}`, true);
+        UI.showToast(`Falha ao iniciar busca: ${err.message}`, "error", 6000);
       }
-      UI.startScrapingMonitor();
-    } catch (err) {
-      btnScrape.disabled = false;
-      btnScrape.innerHTML = `<svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg> Scrape Jobs`;
-      UI.setPipelineProgress(100, `Failed to launch: ${err.message}`, true);
-      UI.showToast(`Scraping launch failed: ${err.message}`, "error", 6000);
-    }
-  });
+    });
+  }
 
-  // 5. Generate Cold Outreach Report
+  // 6. Generate Cold Outreach Report
   const btnCold = document.getElementById("btnGenColdReport");
-  btnCold.addEventListener("click", async () => {
-    btnCold.disabled = true;
-    UI.setPipelineProgress(50, "Synthesizing speculative outreach dossier...");
-    UI.showToast("Generating cold outreach dossier...", "info", 3000);
+  if (btnCold) {
+    btnCold.addEventListener("click", async () => {
+      btnCold.disabled = true;
+      UI.setPipelineProgress(50, "Sintetizando dossiê de prospecção fria...");
+      UI.showToast("Gerando dossiê de prospecção fria...", "info", 3000);
 
-    try {
-      const res = await API.generateColdReport();
-      UI.setPipelineProgress(100, "Cold Outreach Dossier generated!");
-      UI.showToast(
-        `Cold Outreach Dossier compiled!`,
-        "success",
-        6000
-      );
-      await loadColdOutreach();
-    } catch (err) {
-      UI.setPipelineProgress(100, `Report generation failed: ${err.message}`, true);
-      UI.showToast(`Failed to generate report: ${err.message}`, "error", 6000);
-    } finally {
-      btnCold.disabled = false;
-    }
-  });
+      try {
+        await API.generateColdReport();
+        UI.setPipelineProgress(100, "Dossiê de Cold Outreach gerado!");
+        UI.showToast("Dossiê compilado com sucesso!", "success", 6000);
+        await loadColdOutreach();
+      } catch (err) {
+        UI.setPipelineProgress(100, `Falha na geração: ${err.message}`, true);
+        UI.showToast(`Falha: ${err.message}`, "error", 6000);
+      } finally {
+        btnCold.disabled = false;
+      }
+    });
+  }
 
-  // 6. Terminal Clear Action
+  // 7. Clear Logs Terminal
   const btnClearLogs = document.getElementById("btnClearLogs");
   if (btnClearLogs) {
     btnClearLogs.addEventListener("click", () => {
       const terminal = document.getElementById("logTerminal");
-      if (terminal) terminal.innerText = "=== Terminal cleared by user ===\n";
+      if (terminal) terminal.innerText = "=== Terminal limpo pelo usuário ===\n";
     });
   }
 
-  // 7. Initialize Live WebSocket Terminal Logs
+  // 8. Connect WebSocket Terminal Logs
   connectLogsWebSocket();
 
-  // 8. Initialize Components and KPIs
+  // 9. Initialize Components and KPIs
   Kanban.init();
   Doubts.loadDoubts();
   UI.updateKPIs();
@@ -301,28 +370,41 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadColdOutreach() {
   const container = document.getElementById("coldList");
   if (!container) return;
-  const data = await API.getColdTargets();
-  const targets = data.targets || [];
+  try {
+    const data = await API.getColdTargets();
+    const targets = data.targets || [];
 
-  container.innerHTML = "";
-  targets.forEach((target) => {
-    const card = document.createElement("div");
-    card.className = "card-box";
-    card.innerHTML = `
-      <div style="font-size: 0.75rem; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; margin-bottom: 0.25rem;">
-        ${target.ai_domain}
-      </div>
-      <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">${target.company_name}</h3>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-        <strong>Stack:</strong> <code>${target.tech_stack || "Python, IA"}</code>
-      </p>
-      <div style="background: rgba(0,0,0,0.25); padding: 0.6rem; border-radius: var(--radius-sm); font-size: 0.8rem; margin-bottom: 0.75rem;">
-        <strong>Recommended Pitch:</strong> ${target.recommended_approach}
-      </div>
-      <a href="${target.website}" target="_blank" class="card-btn" style="display: inline-block;">Visit Website</a>
-    `;
-    container.appendChild(card);
-  });
+    container.innerHTML = "";
+    if (targets.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; padding: 2rem; text-align: center; color: var(--text-muted);">
+          Nenhum alvo de cold outreach configurado no momento.
+        </div>
+      `;
+      return;
+    }
+
+    targets.forEach((target) => {
+      const card = document.createElement("div");
+      card.className = "card-box";
+      card.innerHTML = `
+        <div style="font-size: 0.72rem; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; margin-bottom: 0.25rem;">
+          ${target.ai_domain}
+        </div>
+        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--text-main);">${target.company_name}</h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+          <strong>Stack:</strong> <code>${target.tech_stack || "Python, IA"}</code>
+        </p>
+        <div style="background: var(--bg-column); padding: 0.6rem; border-radius: 6px; font-size: 0.78rem; margin-bottom: 0.6rem; color: var(--text-secondary);">
+          <strong>Abordagem Recomendada:</strong> ${target.recommended_approach}
+        </div>
+        <a href="${target.website}" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">Visitar Website</a>
+      `;
+      container.appendChild(card);
+    });
+  } catch (err) {
+    console.warn("Failed to load cold targets:", err);
+  }
 }
 
 function connectLogsWebSocket() {
@@ -332,20 +414,27 @@ function connectLogsWebSocket() {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const wsUrl = `${protocol}//${window.location.host}/ws/logs`;
 
-  const ws = new WebSocket(wsUrl);
+  try {
+    const ws = new WebSocket(wsUrl);
 
-  ws.onopen = () => {
-    terminal.innerText = "=== Connected to Live Audit Logs Stream ===\n";
-  };
+    ws.onopen = () => {
+      terminal.innerText = "=== Conectado ao Fluxo de Auditoria em Tempo Real ===\n";
+    };
 
-  ws.onmessage = (event) => {
-    terminal.innerText += event.data;
-    terminal.scrollTop = terminal.scrollHeight;
-  };
+    ws.onmessage = (event) => {
+      terminal.innerText += event.data;
+      terminal.scrollTop = terminal.scrollHeight;
+    };
 
-  ws.onclose = () => {
-    terminal.innerText += "\n[Connection closed. Reconnecting in 3s...]";
-    setTimeout(connectLogsWebSocket, 3000);
-  };
+    ws.onclose = () => {
+      terminal.innerText += "\n[Conexão encerrada. Reconectando em 4s...]";
+      setTimeout(connectLogsWebSocket, 4000);
+    };
+
+    ws.onerror = () => {
+      terminal.innerText += "\n[Aguardando servidor de logs...]";
+    };
+  } catch (e) {
+    console.warn("WebSocket not supported or failed to connect:", e);
+  }
 }
-

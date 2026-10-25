@@ -26,15 +26,40 @@ CREATE TABLE IF NOT EXISTS jobs (
 CREATE TABLE IF NOT EXISTS applications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT 'wishlist', -- 'wishlist', 'to_apply', 'applied', 'interview', 'offer', 'rejected'
+    status TEXT NOT NULL DEFAULT 'wishlist', -- 'wishlist', 'to_apply', 'applied', 'interview', 'offer', 'rejected', 'discarded', 'hired'
     application_mode TEXT NOT NULL DEFAULT 'semi_auto', -- 'auto', 'semi_auto'
     cv_pdf_path TEXT,
     cover_letter_pdf_path TEXT,
+    report_path TEXT,
     requires_cover_letter BOOLEAN NOT NULL DEFAULT 0,
     applied_at TIMESTAMP,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    evaluation_score REAL DEFAULT 4.0,
+    match_grade TEXT DEFAULT 'A',
+    salary_range TEXT,
+    followup_due_at TIMESTAMP,
+    key_contact_name TEXT,
+    key_contact_role TEXT,
+    key_contact_linkedin TEXT,
+    key_contact_email TEXT,
+    outreach_message TEXT,
+    star_stories TEXT,
+    form_answers TEXT,
+    evaluation_report_path TEXT,
     FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE
+);
+
+-- 2b. Status Transition Ledger & Event History (Career-Ops Traceability)
+CREATE TABLE IF NOT EXISTS status_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    application_id INTEGER NOT NULL,
+    from_status TEXT,
+    to_status TEXT NOT NULL,
+    source TEXT NOT NULL, -- 'user', 'scraper', 'evaluator', 'scheduler', 'sync'
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(application_id) REFERENCES applications(id) ON DELETE CASCADE
 );
 
 -- 3. Human-in-the-Loop Doubt & Resolution Queue
@@ -81,3 +106,5 @@ CREATE INDEX IF NOT EXISTS idx_applications_status ON applications(status);
 CREATE INDEX IF NOT EXISTS idx_doubts_status ON doubts(status);
 CREATE INDEX IF NOT EXISTS idx_cold_outreach_status ON cold_outreach_targets(status);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_event_type ON audit_logs(event_type);
+CREATE INDEX IF NOT EXISTS idx_status_events_app_id ON status_events(application_id);
+

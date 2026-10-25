@@ -2,11 +2,13 @@
 
 import json
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.database.models import Application, AuditLog, ColdOutreachTarget, Doubt, Job
+from src.database.models import Application, AuditLog, ColdOutreachTarget, Doubt, Job, StatusEvent
+from src.engine.career_ops_sync import append_status_log
 from src.utils.logger import log_audit_event, logger
 
 
@@ -57,12 +59,35 @@ async def get_all_jobs(
 # ==============================================================================
 # Application Repository (Kanban Pipeline)
 # ==============================================================================
-async def create_application(db: AsyncSession, application_data: dict) -> Application:
-    """Create a new Kanban application tracking item."""
+async def create_application(
+    db: AsyncSession, application_data: dict, source: str = "system", initial_note: str | None = None
+) -> Application:
+    """Create a new Kanban application tracking item with initial status event ledger."""
     application = Application(**application_data)
     db.add(application)
     await db.commit()
     await db.refresh(application)
+
+    # Initial status transition event
+    status_event = StatusEvent(
+        application_id=application.id,
+        from_status=None,
+        to_status=application.status,
+        source=source,
+        notes=initial_note or "Application registered in pipeline.",
+    )
+    db.add(status_event)
+    await db.commit()
+
+    # Append to canonical status-log.tsv
+    append_status_log(
+        tracker_num=application.id,
+        from_status=None,
+        to_status=application.status,
+        source=source,
+        note=initial_note or "Application registered in pipeline.",
+        event_time=application.created_at,
+    )
 
     log_audit_event(
         event_type="APPLICATION_CREATED",
@@ -83,9 +108,14 @@ async def update_application_status(
     application_id: int,
     new_status: str,
     notes: str | None = None,
+    source: str = "user",
 ) -> Application | None:
-    """Transition an application across Kanban columns with mandatory audit trail."""
-    stmt = select(Application).where(Application.id == application_id)
+    """Transition an application across Kanban columns with full StatusEvent ledger and audit trail."""
+    stmt = (
+        select(Application)
+        .where(Application.id == application_id)
+        .options(selectinload(Application.job), selectinload(Application.status_events))
+    )
     result = await db.execute(stmt)
     application = result.scalar_one_or_none()
     if not application:
@@ -95,11 +125,40 @@ async def update_application_status(
     application.status = new_status
     if notes is not None:
         application.notes = notes
-    if new_status == "applied" and not application.applied_at:
-        application.applied_at = datetime.now(timezone.utc)
+
+    now_utc = datetime.now(timezone.utc)
+    if new_status == "applied":
+        if not application.applied_at:
+            application.applied_at = now_utc
+        # Set follow-up cadence: 7 days window
+        application.followup_due_at = now_utc + timedelta(days=7)
+    elif new_status == "interview":
+        # Interview cadence: 3-5 days
+        application.followup_due_at = now_utc + timedelta(days=4)
+
+    # Immutable transition event in DB
+    event = StatusEvent(
+        application_id=application.id,
+        from_status=old_status,
+        to_status=new_status,
+        source=source,
+        notes=notes,
+        created_at=now_utc,
+    )
+    db.add(event)
 
     await db.commit()
     await db.refresh(application)
+
+    # Append to canonical Career-Ops data/status-log.tsv
+    append_status_log(
+        tracker_num=application.id,
+        from_status=old_status,
+        to_status=new_status,
+        source=source,
+        note=notes,
+        event_time=now_utc,
+    )
 
     log_audit_event(
         event_type="APPLICATION_STATUS_UPDATED",
@@ -110,16 +169,68 @@ async def update_application_status(
             "old_status": old_status,
             "new_status": new_status,
             "job_id": application.job_id,
+            "source": source,
+            "notes": notes,
         },
     )
     return application
 
 
+async def add_application_event(
+    db: AsyncSession,
+    application_id: int,
+    note: str,
+    source: str = "user",
+) -> StatusEvent | None:
+    """Record an interaction or note in the application status ledger without changing columns."""
+    app = await get_application_by_id(db, application_id)
+    if not app:
+        return None
+
+    now_utc = datetime.now(timezone.utc)
+    event = StatusEvent(
+        application_id=application_id,
+        from_status=app.status,
+        to_status=app.status,
+        source=source,
+        notes=note,
+        created_at=now_utc,
+    )
+    db.add(event)
+    await db.commit()
+    await db.refresh(event)
+
+    append_status_log(
+        tracker_num=application_id,
+        from_status=app.status,
+        to_status=app.status,
+        source=source,
+        note=note,
+        event_time=now_utc,
+    )
+    return event
+
+
+async def get_application_by_id(
+    db: AsyncSession, application_id: int
+) -> Application | None:
+    """Retrieve application by ID with eager loading for job and status history."""
+    stmt = (
+        select(Application)
+        .where(Application.id == application_id)
+        .options(selectinload(Application.job), selectinload(Application.status_events))
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
 async def get_applications_by_status(
     db: AsyncSession, status: str | None = None
 ) -> Sequence[Application]:
-    """List applications optionally filtered by Kanban column status."""
-    stmt = select(Application)
+    """List applications optionally filtered by Kanban column status, with eager loaded relations."""
+    stmt = select(Application).options(
+        selectinload(Application.job), selectinload(Application.status_events)
+    )
     if status:
         stmt = stmt.where(Application.status == status)
     stmt = stmt.order_by(Application.created_at.desc())

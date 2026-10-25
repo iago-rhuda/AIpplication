@@ -27,21 +27,21 @@ const Doubts = {
       const box = document.createElement("div");
       box.className = "card-box";
       box.innerHTML = `
-        <div style="font-size: 0.75rem; color: var(--accent-amber); font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem;">
+        <div style="font-size: 0.72rem; color: var(--accent-amber); font-weight: 700; text-transform: uppercase; margin-bottom: 0.35rem;">
           ${doubt.doubt_type.replace("_", " ")}
         </div>
-        <p style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem;">
+        <p style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--text-main);">
           ${doubt.question_text}
         </p>
-        <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">
-          <strong>Suggested Decision:</strong> ${doubt.suggested_answer || "None provided"}
+        <div style="background: var(--bg-column); padding: 0.65rem; border-radius: 6px; margin-bottom: 0.75rem; font-size: 0.78rem; color: var(--text-secondary); border: 1px solid var(--border-subtle);">
+          <strong>Decisão Sugerida:</strong> ${doubt.suggested_answer || "Nenhuma sugestão fornecida"}
         </div>
         <div style="display: flex; gap: 0.5rem;">
-          <button class="btn btn-resolve" style="background: var(--accent-green); font-size: 0.75rem; padding: 0.4rem 0.8rem;">
-            Approve & Proceed
+          <button class="btn btn-resolve" style="background: var(--accent-green); font-size: 0.75rem; padding: 0.35rem 0.75rem; color: #fff;">
+            Aprovar & Prosseguir
           </button>
-          <button class="btn btn-secondary btn-reject" style="font-size: 0.75rem; padding: 0.4rem 0.8rem;">
-            Dismiss / Reject
+          <button class="btn btn-secondary btn-reject" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">
+            Descartar
           </button>
         </div>
       `;

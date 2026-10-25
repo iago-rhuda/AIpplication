@@ -1,0 +1,64 @@
+# Career-Ops Profile Configuration - Adapted for UTC TN10 Engineering Internships
+candidate:
+  full_name: "Candidat UTC TN10"
+  title: "Élève-Ingénieur en Intelligence Artificielle & Science des Données (UTC TN10)"
+  email: "candidat.iad@etu.utc.fr"
+  phone: "+33 6 00 00 00 00"
+  location: "Paris / Compiègne, France"
+  linkedin: "linkedin.com/in/candidat-utc-iad"
+  github: "github.com/candidat-utc"
+  portfolio_url: "https://portfolio.candidat.fr"
+
+target_roles:
+  primary:
+    - "Stage Ingénieur IA / Machine Learning"
+    - "Stage R&D Intelligence Artificielle & LLM"
+    - "Stage Data Scientist / MLOps"
+  archetypes:
+    - name: "AI/ML Research & Engineering Intern"
+      level: "PFE TN10 / Bac+5"
+      fit: "primary"
+    - name: "Data Science & GenAI Intern"
+      level: "PFE TN10 / Bac+5"
+      fit: "primary"
+    - name: "Knowledge Graphs & NLP Intern"
+      level: "PFE TN10 / Bac+5"
+      fit: "secondary"
+
+narrative:
+  headline: "Élève-ingénieur UTC spécialisé en IA générative, RAG et graphes de connaissances"
+  exit_story: "Étudiant en dernière année de Génie Informatique à l'UTC (filière IAD), prêt pour un stage de fin d'études de 6 mois à partir de février 2027."
+  superpowers:
+    - "Architectures RAG & Modèles de Langage (LLM/LangChain/Transformers)"
+    - "Graphes de Connaissances & Ontologies (Graphify/NetworkX)"
+    - "Machine Learning & Deep Learning appliqués (PyTorch/Scikit-Learn)"
+    - "Développement Backend Robuste (FastAPI, Python Async, Docker)"
+  proof_points:
+    - name: "Stage AI Application Ecosystem"
+      url: "https://github.com/career-ops-hq/career-ops"
+      hero_metric: "Pipeline autonome avec traçabilité complète et évaluation A-H"
+    - name: "Knowledge Graph Engine"
+      url: "https://github.com/candidat-utc/kg-engine"
+      hero_metric: "Extraction sémantique et raisonnement sur graphes"
+
+academic_tn10:
+  institution: "Université de Technologie de Compiègne (UTC)"
+  degree: "Diplôme d'Ingénieur en Génie Informatique (Bac+5)"
+  track: "Intelligence Artificielle et Données (IAD)"
+  semester: "P27"
+  earliest_start_date: "2027-02-01"
+  duration_weeks_min: 24
+  duration_weeks_max: 26
+  target_locations:
+    - "Paris"
+    - "Île-de-France"
+    - "Compiègne"
+  workplace_types:
+    - "Hybride"
+    - "Présentiel"
+
+compensation:
+  target_range: "1400€ - 2000€ / mois"
+  currency: "EUR"
+  minimum: "4.35€ / heure (~650€ / mois minimum légal gratification)"
+  location_flexibility: "Paris / Île-de-France ou Compiègne (Hybride ou Présentiel)"
