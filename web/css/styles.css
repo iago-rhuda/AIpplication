@@ -359,8 +359,367 @@ body {
   font-family: "Courier New", Courier, monospace;
   font-size: 0.8rem;
   color: #22c55e;
-  height: calc(100vh - 220px);
+  height: calc(100vh - 260px);
   overflow-y: auto;
   white-space: pre-wrap;
   line-height: 1.4;
 }
+
+/* ==============================================================================
+ * Global Pipeline Progress & Status Banner
+ * ============================================================================== */
+.pipeline-banner {
+  background: rgba(16, 22, 34, 0.95);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  backdrop-filter: blur(12px);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.pipeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.pipeline-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 10px var(--accent-green);
+  display: inline-block;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pulse-dot.running {
+  background: var(--accent-amber);
+  box-shadow: 0 0 12px var(--accent-amber);
+  animation: pulse-glow 1.4s infinite alternate ease-in-out;
+}
+
+.pulse-dot.error {
+  background: var(--accent-red);
+  box-shadow: 0 0 12px var(--accent-red);
+}
+
+@keyframes pulse-glow {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.3); opacity: 1; }
+}
+
+.pipeline-status-text {
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.pipeline-subtext {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.pipeline-percent {
+  font-family: monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.12);
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.progress-track-wrapper {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  height: 6px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.progress-track-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-cyan) 50%, var(--accent-purple) 100%);
+  border-radius: 9999px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+}
+
+.progress-track-bar.active::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ==============================================================================
+ * KPI Metrics Overview Strip
+ * ============================================================================== */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  padding: 1rem 2rem 0.5rem 2rem;
+  background: var(--bg-primary);
+}
+
+.kpi-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.kpi-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.kpi-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.2rem;
+}
+
+.kpi-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.kpi-sub {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.kpi-icon {
+  font-size: 1.5rem;
+  opacity: 0.85;
+}
+
+/* ==============================================================================
+ * Kanban Card Actions & Document Ready States
+ * ============================================================================== */
+.card-btn.btn-ready {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #34d399;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.card-btn.btn-ready:hover {
+  background: var(--accent-green);
+  color: #000;
+}
+
+.card-btn.loading {
+  opacity: 0.7;
+  pointer-events: none;
+  position: relative;
+}
+
+.card-btn.loading::after {
+  content: " ⟳";
+  animation: spin 1s infinite linear;
+  display: inline-block;
+}
+
+.card-inline-progress {
+  margin-top: 0.5rem;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.card-inline-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent-blue);
+  animation: card-progress-anim 2s infinite ease-in-out;
+}
+
+@keyframes card-progress-anim {
+  0% { width: 10%; margin-left: 0; }
+  50% { width: 70%; margin-left: 20%; }
+  100% { width: 100%; margin-left: 0; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ==============================================================================
+ * Modern Toast Notifications
+ * ============================================================================== */
+.toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 420px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  background: rgba(16, 22, 34, 0.95);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.15rem;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  position: relative;
+  overflow: hidden;
+  animation: toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+@keyframes toast-in {
+  from { transform: translateX(100%) scale(0.95); opacity: 0; }
+  to { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+.toast.toast-hiding {
+  animation: toast-out 0.25s forwards ease-in;
+}
+
+@keyframes toast-out {
+  from { transform: translateX(0) scale(1); opacity: 1; }
+  to { transform: translateX(100%) scale(0.9); opacity: 0; }
+}
+
+.toast-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.toast-icon {
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.toast-content {
+  flex: 1;
+}
+
+.toast-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 0.15rem;
+}
+
+.toast-msg {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.toast-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.toast-action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.toast-action-btn:hover {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.toast-close {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.1rem 0.3rem;
+}
+
+.toast-close:hover {
+  color: var(--text-main);
+}
+
+.toast-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--accent-blue);
+  width: 100%;
+}
+
+.toast-success { border-left: 4px solid var(--accent-green); }
+.toast-success .toast-bar { background: var(--accent-green); }
+.toast-info { border-left: 4px solid var(--accent-cyan); }
+.toast-info .toast-bar { background: var(--accent-cyan); }
+.toast-warning { border-left: 4px solid var(--accent-amber); }
+.toast-warning .toast-bar { background: var(--accent-amber); }
+.toast-error { border-left: 4px solid var(--accent-red); }
+.toast-error .toast-bar { background: var(--accent-red); }
+
