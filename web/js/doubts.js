@@ -47,16 +47,30 @@ const Doubts = {
       `;
 
       box.querySelector(".btn-resolve").addEventListener("click", async () => {
-        await API.resolveDoubt(doubt.id, "Approved by user in web interface");
-        await Doubts.loadDoubts();
+        try {
+          await API.resolveDoubt(doubt.id, "Approved by user in web interface");
+          if (window.UI) window.UI.showToast("Doubt approved! Candidate application unlocked.", "success", 4000);
+          await Doubts.loadDoubts();
+          if (window.Kanban) await window.Kanban.loadApplications();
+        } catch (err) {
+          if (window.UI) window.UI.showToast(`Error resolving doubt: ${err.message}`, "error", 5000);
+        }
       });
 
       box.querySelector(".btn-reject").addEventListener("click", async () => {
-        await API.resolveDoubt(doubt.id, "Rejected by user", "ignored");
-        await Doubts.loadDoubts();
+        try {
+          await API.resolveDoubt(doubt.id, "Rejected by user", "ignored");
+          if (window.UI) window.UI.showToast("Doubt dismissed/ignored.", "info", 4000);
+          await Doubts.loadDoubts();
+        } catch (err) {
+          if (window.UI) window.UI.showToast(`Error rejecting doubt: ${err.message}`, "error", 5000);
+        }
       });
 
       container.appendChild(box);
     });
+
+    const kpiDoubts = document.getElementById("kpiDoubtsCount");
+    if (kpiDoubts) kpiDoubts.innerText = doubts.length;
   },
 };
