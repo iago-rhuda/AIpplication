@@ -4,8 +4,7 @@ import json
 from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from src.database.models import Application, AuditLog, ColdOutreachTarget, Doubt, Job, StatusEvent
 from src.engine.career_ops_sync import append_status_log
@@ -264,17 +263,76 @@ async def create_doubt(db: AsyncSession, doubt_data: dict) -> Doubt:
 
 async def resolve_doubt(
     db: AsyncSession, doubt_id: int, user_decision: str, status: str = "resolved"
-) -> Doubt | None:
-    """Record user resolution for a pending doubt."""
-    stmt = select(Doubt).where(Doubt.id == doubt_id)
+) -> tuple[Doubt | None, Application | None]:
+    """Record user resolution for a pending doubt. If approved, promote the job to Wishlist."""
+    stmt = select(Doubt).options(joinedload(Doubt.job)).where(Doubt.id == doubt_id)
     result = await db.execute(stmt)
     doubt = result.scalar_one_or_none()
     if not doubt:
-        return None
+        return None, None
 
     doubt.user_decision = user_decision
     doubt.status = status
     doubt.resolved_at = datetime.now(timezone.utc)
+    
+    promoted_app: Application | None = None
+
+    if status == "resolved" and doubt.job:
+        # Mark the job as compliant
+        doubt.job.is_iad_compliant = True
+
+        # Check if an application already exists for this job
+        app_stmt = select(Application).where(Application.job_id == doubt.job_id)
+        existing_app = (await db.execute(app_stmt)).scalar_one_or_none()
+
+        if not existing_app:
+            from src.engine.career_ops_evaluator import evaluate_with_career_ops
+            from src.engine.career_ops_sync import append_or_update_contact
+            import json
+
+            job_dict = {
+                "id": doubt.job.id,
+                "company_name": doubt.job.company_name,
+                "title": doubt.job.title,
+                "location": doubt.job.location,
+                "description": doubt.job.description,
+                "raw_requirements": doubt.job.raw_requirements,
+                "job_url": doubt.job.job_url,
+                "workplace_type": doubt.job.workplace_type,
+            }
+            eval_res = evaluate_with_career_ops(job_dict, report_num=doubt.job.id)
+
+            promoted_app = await create_application(
+                db,
+                {
+                    "job_id": doubt.job.id,
+                    "status": "wishlist",
+                    "application_mode": "semi_auto",
+                    "requires_cover_letter": False,
+                    "evaluation_score": eval_res.get("evaluation_score", 4.5),
+                    "match_grade": eval_res.get("match_grade", "A"),
+                    "salary_range": eval_res.get("salary_range", "1 400€ - 1 800€"),
+                    "star_stories": json.dumps(eval_res.get("star_stories", []), ensure_ascii=False),
+                    "form_answers": json.dumps(eval_res.get("form_answers", []), ensure_ascii=False),
+                    "key_contact_name": eval_res.get("key_contact_name"),
+                    "key_contact_role": eval_res.get("key_contact_role"),
+                    "outreach_message": eval_res.get("outreach_message"),
+                    "evaluation_report_path": eval_res.get("report_rel_path"),
+                },
+                source="user",
+                initial_note=f"Approved manually from Human-in-the-Loop review: {user_decision}",
+            )
+
+            if eval_res.get("key_contact_name"):
+                append_or_update_contact(
+                    name=eval_res["key_contact_name"],
+                    company=doubt.job.company_name,
+                    contact_type="recruiter",
+                    title=eval_res["key_contact_role"],
+                    tracker_num=promoted_app.id,
+                    notes=f"Identified for {doubt.job.title}",
+                )
+
     await db.commit()
     await db.refresh(doubt)
 
@@ -287,15 +345,17 @@ async def resolve_doubt(
             "job_id": doubt.job_id,
             "user_decision": user_decision,
             "status": status,
+            "promoted_app_id": promoted_app.id if promoted_app else None,
         },
     )
-    return doubt
+    return doubt, promoted_app
 
 
 async def get_pending_doubts(db: AsyncSession) -> Sequence[Doubt]:
-    """Retrieve all pending doubts requiring user attention."""
+    """Retrieve all pending doubts requiring user attention, with associated Job data."""
     stmt = (
         select(Doubt)
+        .options(joinedload(Doubt.job))
         .where(Doubt.status == "pending")
         .order_by(Doubt.created_at.desc())
     )

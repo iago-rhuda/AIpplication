@@ -8,11 +8,11 @@ const API = {
     return res.json();
   },
 
-  async triggerScrape(keywords = ["Stage", "Intelligence Artificielle", "Data"], location = "Paris, France") {
+  async triggerScrape(keywords = ["Stage", "Data Scientist", "Machine Learning", "IA"], location = "Paris, Île-de-France, France") {
     const res = await fetch("/api/jobs/scrape", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keywords, location, limit_per_source: 10 }),
+      body: JSON.stringify({ keywords, location, limit_per_source: 15 }),
     });
     return res.json();
   },
@@ -77,6 +77,15 @@ const API = {
 
   async resolveDoubt(doubtId, userDecision, status = "resolved") {
     const res = await fetch(`/api/doubts/${doubtId}/resolve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_decision: userDecision, status }),
+    });
+    return res.json();
+  },
+
+  async resolveAllDoubts(userDecision = "Approved all by user", status = "resolved") {
+    const res = await fetch("/api/doubts/resolve-all", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_decision: userDecision, status }),

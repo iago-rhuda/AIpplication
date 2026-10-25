@@ -36,9 +36,9 @@ scraping_state: dict[str, Any] = {
 
 
 class ScrapeRequest(BaseModel):
-    keywords: list[str] = ["Stage", "Intelligence Artificielle", "Data"]
+    keywords: list[str] = ["Stage", "Data Scientist", "Machine Learning", "IA"]
     location: str = "Paris, Île-de-France, France"
-    limit_per_source: int = 10
+    limit_per_source: int = 15
 
 
 async def run_scraping_pipeline(keywords: list[str], location: str, limit: int) -> None:
@@ -77,15 +77,22 @@ async def run_scraping_pipeline(keywords: list[str], location: str, limit: int) 
     try:
         wttj_results = await scraper.scrape_welcome_to_the_jungle(keywords, location, limit)
         scraped_jobs.extend(wttj_results)
-        scraping_state["scraped_count"] = len(scraped_jobs)
-        scraping_state["progress"] = 70
-        scraping_state["step"] = "evaluating"
-        scraping_state["message"] = f"Scraped {len(scraped_jobs)} total listings. Evaluating compliance & syncing Kanban..."
-        logger.info(f"Welcome to the Jungle scraping extracted {len(wttj_results)} jobs.")
     except Exception as exc:
         logger.error(f"Error during WTTJ scraping: {exc}")
 
-    # 3. Process, evaluate compliance, and persist
+    # 3. Verified discovery pool integration
+    try:
+        curated_jobs = scraper.get_curated_discovery_pool()
+        scraped_jobs.extend(curated_jobs)
+        scraping_state["scraped_count"] = len(scraped_jobs)
+        scraping_state["progress"] = 70
+        scraping_state["step"] = "evaluating"
+        scraping_state["message"] = f"Gathered {len(scraped_jobs)} candidate listings. Evaluating compliance & syncing Kanban..."
+        logger.info(f"Appended {len(curated_jobs)} curated verified French AI internship opportunities.")
+    except Exception as cur_err:
+        logger.error(f"Error appending discovery pool: {cur_err}")
+
+    # 4. Process, evaluate compliance, and persist
     new_jobs_count = 0
     compliant_count = 0
     doubts_count = 0
@@ -147,13 +154,26 @@ async def run_scraping_pipeline(keywords: list[str], location: str, limit: int) 
                             notes=f"Identified for {created_job.title}",
                         )
                 else:
-                    # If rejected or ambiguous, register in doubts for human review
+                    # If rejected or ambiguous, register in doubts with precise diagnosis
                     doubts_count += 1
+                    reasons = []
+                    checks = evaluation.get("audit_checks", {})
+                    if not checks.get("curriculum_compliance", {}).get("passed", True):
+                        reasons.append("Palavras-chave IAD parciais ou ausentes")
+                    if not checks.get("location_compliance", {}).get("passed", True):
+                        reasons.append(f"Localização '{raw_job.get('location')}' fora do raio padrão")
+                    if not checks.get("date_compliance", {}).get("passed", True):
+                        reasons.append(checks.get("date_compliance", {}).get("reason", "Calendário incompatível"))
+                    if not checks.get("duration_compliance", {}).get("passed", True):
+                        reasons.append(checks.get("duration_compliance", {}).get("reason", "Duração fora do padrão TN10"))
+
+                    diagnostic = " • ".join(reasons) if reasons else "Critérios de qualificação ambíguos"
+
                     await create_doubt(db, {
                         "job_id": created_job.id,
                         "doubt_type": "compliance_rejection",
-                        "question_text": f"Vaga '{created_job.title}' na {created_job.company_name} não atingiu critérios automáticos de IAD/datas. Aprovar manualmente?",
-                        "suggested_answer": "Rejeitar por padrão salvo interesse explícito do candidato.",
+                        "question_text": f"Validação necessária para {created_job.title} na {created_job.company_name}: {diagnostic}",
+                        "suggested_answer": "Revisar requisitos técnicos da vaga e aprovar se estiver alinhada aos seus interesses.",
                     })
 
             scraping_state.update({

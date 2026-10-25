@@ -1271,3 +1271,329 @@ html, body {
   cursor: pointer;
   margin-left: auto;
 }
+
+/* ==========================================================================
+   Doubts & Human-in-the-Loop Review Queue
+   ========================================================================== */
+
+.doubts-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-subtle);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.doubts-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.doubts-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.doubts-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0.2rem 0 0 0;
+}
+
+.doubts-counter-badge {
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-amber);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  white-space: nowrap;
+}
+
+.doubts-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.doubts-grid {
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  gap: 1.25rem;
+  overflow-y: auto;
+  max-height: calc(100vh - 170px);
+}
+
+.doubt-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.doubt-card:hover {
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.doubt-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.doubt-company-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.doubt-company-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--bg-column);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.doubt-company-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.doubt-badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.doubt-badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.doubt-badge-source {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.doubt-badge-workplace {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.doubt-badge-timing {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.doubt-job-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.doubt-location {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.doubt-diagnostic-box {
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 3px solid var(--accent-amber);
+  padding: 0.75rem 0.9rem;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.82rem;
+  color: var(--text-main);
+}
+
+.doubt-diag-title {
+  font-weight: 700;
+  color: var(--accent-amber);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.doubt-diag-text {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-main);
+  margin-bottom: 0.35rem;
+}
+
+.doubt-diag-suggestion {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.doubt-skills-wrap {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.doubt-skill-pill {
+  font-size: 0.72rem;
+  background: var(--bg-column);
+  border: 1px solid var(--border-subtle);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  color: var(--text-secondary);
+}
+
+.doubt-description-box {
+  background: var(--bg-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.doubt-desc-preview {
+  white-space: pre-line;
+  max-height: 80px;
+  overflow: hidden;
+  position: relative;
+}
+
+.doubt-desc-full {
+  white-space: pre-line;
+  display: none;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border-subtle);
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.doubt-toggle-desc {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.3rem 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.doubt-toggle-desc:hover {
+  text-decoration: underline;
+}
+
+.doubt-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.btn-approve-doubt {
+  background: var(--accent-green);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: filter 0.15s ease;
+}
+
+.btn-approve-doubt:hover {
+  filter: brightness(1.1);
+}
+
+.btn-discard-doubt {
+  background: transparent;
+  color: var(--accent-red);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  font-size: 0.82rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-discard-doubt:hover {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.btn-open-job-link {
+  margin-left: auto;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.78rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.btn-open-job-link:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.doubts-empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px dashed var(--border-subtle);
+  border-radius: 12px;
+}
