@@ -1,5 +1,5 @@
-"""Kanban application pipeline management endpoints."""
-
+from pathlib import Path
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +8,7 @@ from src.database.crud import (
     get_applications_by_status,
     update_application_status,
 )
-from src.database.models import Application, Job
+from src.database.models import Application
 from src.database.session import get_db
 from src.engine.cover_letter_generator import generate_cover_letter
 from src.engine.latex_compiler import compile_custom_cv
@@ -22,11 +22,44 @@ class StatusUpdateRequest(BaseModel):
     notes: str | None = None
 
 
+def serialize_application(app: Application) -> dict[str, Any]:
+    """Format Application model with relative web URLs for browser downloads."""
+    cv_web_url = f"/output/{Path(app.cv_pdf_path).name}" if app.cv_pdf_path else None
+    lm_web_url = f"/output/{Path(app.cover_letter_pdf_path).name}" if app.cover_letter_pdf_path else None
+
+    return {
+        "id": app.id,
+        "job_id": app.job_id,
+        "status": app.status,
+        "application_mode": app.application_mode,
+        "cv_pdf_path": app.cv_pdf_path,
+        "cv_web_url": cv_web_url,
+        "cover_letter_pdf_path": app.cover_letter_pdf_path,
+        "cover_letter_web_url": lm_web_url,
+        "requires_cover_letter": app.requires_cover_letter,
+        "applied_at": app.applied_at.isoformat() if app.applied_at else None,
+        "notes": app.notes,
+        "created_at": app.created_at.isoformat() if app.created_at else None,
+        "job": {
+            "id": app.job.id,
+            "company_name": app.job.company_name,
+            "title": app.job.title,
+            "location": app.job.location,
+            "job_url": app.job.job_url,
+            "source": app.job.source,
+            "workplace_type": app.job.workplace_type,
+            "is_iad_compliant": app.job.is_iad_compliant,
+            "compliance_score": app.job.compliance_score,
+        } if app.job else None,
+    }
+
+
 @router.get("")
 async def list_applications(status: str | None = None, db: AsyncSession = Depends(get_db)):
     """Retrieve all applications grouped into Kanban columns."""
     apps = await get_applications_by_status(db, status=status)
-    return {"applications": apps, "total": len(apps)}
+    serialized = [serialize_application(a) for a in apps]
+    return {"applications": serialized, "total": len(serialized)}
 
 
 @router.patch("/{app_id}/status")
@@ -39,7 +72,7 @@ async def change_application_status(
     updated = await update_application_status(db, app_id, payload.status, payload.notes)
     if not updated:
         raise HTTPException(status_code=404, detail="Application not found")
-    return {"status": "success", "application": updated}
+    return {"status": "success", "application": serialize_application(updated)}
 
 
 @router.post("/{app_id}/generate-documents")
@@ -66,6 +99,7 @@ async def generate_application_documents(
         cv_path = compile_custom_cv(job_dict)
         target_app.cv_pdf_path = str(cv_path)
 
+        lm_path = None
         if target_app.requires_cover_letter:
             lm_path = generate_cover_letter(job_dict)
             if lm_path:
@@ -74,10 +108,15 @@ async def generate_application_documents(
         await db.commit()
         await db.refresh(target_app)
 
+        cv_web_url = f"/output/{cv_path.name}"
+        lm_web_url = f"/output/{lm_path.name}" if lm_path else None
+
         return {
             "status": "success",
             "cv_pdf_path": target_app.cv_pdf_path,
+            "cv_web_url": cv_web_url,
             "cover_letter_pdf_path": target_app.cover_letter_pdf_path,
+            "cover_letter_web_url": lm_web_url,
         }
     except Exception as exc:
         logger.error(f"Failed to generate application documents: {exc}")
