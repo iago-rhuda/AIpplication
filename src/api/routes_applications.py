@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config import settings
 from src.database.crud import (
     get_applications_by_status,
     update_application_status,
@@ -22,10 +23,22 @@ class StatusUpdateRequest(BaseModel):
     notes: str | None = None
 
 
+def resolve_web_url(path_str: str | None) -> str | None:
+    """Compute relative /output URL for a filesystem path."""
+    if not path_str:
+        return None
+    try:
+        p = Path(path_str).resolve()
+        rel = p.relative_to(settings.OUTPUT_DIR.resolve())
+        return f"/output/{rel.as_posix()}"
+    except Exception:
+        return f"/output/{Path(path_str).name}"
+
+
 def serialize_application(app: Application) -> dict[str, Any]:
     """Format Application model with relative web URLs for browser downloads."""
-    cv_web_url = f"/output/{Path(app.cv_pdf_path).name}" if app.cv_pdf_path else None
-    lm_web_url = f"/output/{Path(app.cover_letter_pdf_path).name}" if app.cover_letter_pdf_path else None
+    cv_web_url = resolve_web_url(app.cv_pdf_path)
+    lm_web_url = resolve_web_url(app.cover_letter_pdf_path)
 
     return {
         "id": app.id,
@@ -108,8 +121,8 @@ async def generate_application_documents(
         await db.commit()
         await db.refresh(target_app)
 
-        cv_web_url = f"/output/{cv_path.name}"
-        lm_web_url = f"/output/{lm_path.name}" if lm_path else None
+        cv_web_url = resolve_web_url(str(cv_path))
+        lm_web_url = resolve_web_url(str(lm_path)) if lm_path else None
 
         return {
             "status": "success",
